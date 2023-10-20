@@ -9,7 +9,7 @@ import {
 import { MarkNonNullable, ValueOf } from "../utility-types";
 
 export type ChartType = "bar" | "line";
-export type FillStyle = "hachure" | "cross-hatch" | "solid";
+export type FillStyle = "hachure" | "cross-hatch" | "solid" | "zigzag";
 export type FontFamilyKeys = keyof typeof FONT_FAMILY;
 export type FontFamilyValues = typeof FONT_FAMILY[FontFamilyKeys];
 export type Theme = typeof THEME[keyof typeof THEME];
@@ -53,6 +53,7 @@ type _ExcalidrawElementBase = Readonly<{
   /** List of groups the element belongs to.
       Ordered from deepest to shallowest. */
   groupIds: readonly GroupId[];
+  frameId: string | null;
   /** other elements that are bound to this element */
   boundElements:
     | readonly Readonly<{
@@ -83,6 +84,19 @@ export type ExcalidrawEllipseElement = _ExcalidrawElementBase & {
   type: "ellipse";
 };
 
+export type ExcalidrawEmbeddableElement = _ExcalidrawElementBase &
+  Readonly<{
+    type: "embeddable";
+    /**
+     * indicates whether the embeddable src (url) has been validated for rendering.
+     * null value indicates that the validation is pending. We reset the
+     * value on each restore (or url change) so that we can guarantee
+     * the validation came from a trusted source (the editor). Also because we
+     * may not have access to host-app supplied url validator during restore.
+     */
+    validated: boolean | null;
+  }>;
+
 export type ExcalidrawImageElement = _ExcalidrawElementBase &
   Readonly<{
     type: "image";
@@ -97,6 +111,11 @@ export type InitializedExcalidrawImageElement = MarkNonNullable<
   ExcalidrawImageElement,
   "fileId"
 >;
+
+export type ExcalidrawFrameElement = _ExcalidrawElementBase & {
+  type: "frame";
+  name: string | null;
+};
 
 /**
  * These are elements that don't have any additional properties.
@@ -117,7 +136,9 @@ export type ExcalidrawElement =
   | ExcalidrawTextElement
   | ExcalidrawLinearElement
   | ExcalidrawFreeDrawElement
-  | ExcalidrawImageElement;
+  | ExcalidrawImageElement
+  | ExcalidrawFrameElement
+  | ExcalidrawEmbeddableElement;
 
 export type NonDeleted<TElement extends ExcalidrawElement> = TElement & {
   isDeleted: boolean;
@@ -131,6 +152,7 @@ export type ExcalidrawTextElement = _ExcalidrawElementBase &
     fontSize: number;
     fontFamily: FontFamilyValues;
     text: string;
+    baseline: number;
     textAlign: TextAlign;
     verticalAlign: VerticalAlign;
     containerId: ExcalidrawGenericElement["id"] | null;
@@ -147,13 +169,14 @@ export type ExcalidrawBindableElement =
   | ExcalidrawDiamondElement
   | ExcalidrawEllipseElement
   | ExcalidrawTextElement
-  | ExcalidrawImageElement;
+  | ExcalidrawImageElement
+  | ExcalidrawEmbeddableElement
+  | ExcalidrawFrameElement;
 
 export type ExcalidrawTextContainer =
   | ExcalidrawRectangleElement
   | ExcalidrawDiamondElement
   | ExcalidrawEllipseElement
-  | ExcalidrawImageElement
   | ExcalidrawArrowElement;
 
 export type ExcalidrawTextElementWithContainer = {

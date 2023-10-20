@@ -1,6 +1,7 @@
 import cssVariables from "./css/variables.module.scss";
 import { AppProps } from "./types";
-import { FontFamilyValues } from "./element/types";
+import { ExcalidrawElement, FontFamilyValues } from "./element/types";
+import { COLOR_PALETTE } from "./colors";
 
 export const isDarwin = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 export const isWindows = /^Win/.test(navigator.platform);
@@ -40,6 +41,14 @@ export const POINTER_BUTTON = {
   TOUCH: -1,
 } as const;
 
+export const POINTER_EVENTS = {
+  enabled: "all",
+  disabled: "none",
+  // asserted as any so it can be freely assigned to React Element
+  // "pointerEnvets" CSS prop
+  inheritFromUI: "var(--ui-pointerEvents)" as any,
+} as const;
+
 export enum EVENT {
   COPY = "copy",
   PASTE = "paste",
@@ -58,6 +67,7 @@ export enum EVENT {
   GESTURE_START = "gesturestart",
   GESTURE_CHANGE = "gesturechange",
   POINTER_MOVE = "pointermove",
+  POINTER_DOWN = "pointerdown",
   POINTER_UP = "pointerup",
   STATE_CHANGE = "statechange",
   WHEEL = "wheel",
@@ -69,7 +79,17 @@ export enum EVENT {
   // custom events
   EXCALIDRAW_LINK = "excalidraw-link",
   MENU_ITEM_SELECT = "menu.itemSelect",
+  MESSAGE = "message",
 }
+
+export const YOUTUBE_STATES = {
+  UNSTARTED: -1,
+  ENDED: 0,
+  PLAYING: 1,
+  PAUSED: 2,
+  BUFFERING: 3,
+  CUED: 5,
+} as const;
 
 export const ENV = {
   TEST: "test",
@@ -90,10 +110,22 @@ export const FONT_FAMILY = {
 export const THEME = {
   LIGHT: "light",
   DARK: "dark",
+} as const;
+
+export const FRAME_STYLE = {
+  strokeColor: "#bbb" as ExcalidrawElement["strokeColor"],
+  strokeWidth: 1 as ExcalidrawElement["strokeWidth"],
+  strokeStyle: "solid" as ExcalidrawElement["strokeStyle"],
+  fillStyle: "solid" as ExcalidrawElement["fillStyle"],
+  roughness: 0 as ExcalidrawElement["roughness"],
+  roundness: null as ExcalidrawElement["roundness"],
+  backgroundColor: "transparent" as ExcalidrawElement["backgroundColor"],
+  radius: 8,
 };
 
 export const WINDOWS_EMOJI_FALLBACK_FONT = "Segoe UI Emoji";
 
+export const MIN_FONT_SIZE = 1;
 export const DEFAULT_FONT_SIZE = 20;
 export const DEFAULT_FONT_FAMILY: FontFamilyValues = FONT_FAMILY.Virgil;
 export const DEFAULT_TEXT_ALIGN = "left";
@@ -104,26 +136,43 @@ export const CANVAS_ONLY_ACTIONS = ["selectAll"];
 
 export const GRID_SIZE = 20; // TODO make it configurable?
 
-export const MIME_TYPES = {
-  excalidraw: "application/vnd.excalidraw+json",
-  excalidrawlib: "application/vnd.excalidrawlib+json",
-  json: "application/json",
+export const IMAGE_MIME_TYPES = {
   svg: "image/svg+xml",
-  "excalidraw.svg": "image/svg+xml",
   png: "image/png",
-  "excalidraw.png": "image/png",
   jpg: "image/jpeg",
   gif: "image/gif",
   webp: "image/webp",
   bmp: "image/bmp",
   ico: "image/x-icon",
+  avif: "image/avif",
+  jfif: "image/jfif",
+} as const;
+
+export const MIME_TYPES = {
+  json: "application/json",
+  // excalidraw data
+  excalidraw: "application/vnd.excalidraw+json",
+  excalidrawlib: "application/vnd.excalidrawlib+json",
+  // image-encoded excalidraw data
+  "excalidraw.svg": "image/svg+xml",
+  "excalidraw.png": "image/png",
+  // binary
   binary: "application/octet-stream",
+  // image
+  ...IMAGE_MIME_TYPES,
+} as const;
+
+export const EXPORT_IMAGE_TYPES = {
+  png: "png",
+  svg: "svg",
+  clipboard: "clipboard",
 } as const;
 
 export const EXPORT_DATA_TYPES = {
   excalidraw: "excalidraw",
   excalidrawClipboard: "excalidraw/clipboard",
   excalidrawLibrary: "excalidrawlib",
+  excalidrawClipboardWithAPI: "excalidraw-api/clipboard",
 } as const;
 
 export const EXPORT_SOURCE =
@@ -191,16 +240,6 @@ export const DEFAULT_EXPORT_PADDING = 10; // px
 
 export const DEFAULT_MAX_IMAGE_WIDTH_OR_HEIGHT = 1440;
 
-export const ALLOWED_IMAGE_MIME_TYPES = [
-  MIME_TYPES.png,
-  MIME_TYPES.jpg,
-  MIME_TYPES.svg,
-  MIME_TYPES.gif,
-  MIME_TYPES.webp,
-  MIME_TYPES.bmp,
-  MIME_TYPES.ico,
-] as const;
-
 export const MAX_ALLOWED_FILE_BYTES = 2 * 1024 * 1024;
 
 export const SVG_NS = "http://www.w3.org/2000/svg";
@@ -213,6 +252,8 @@ export const VERSIONS = {
 } as const;
 
 export const BOUND_TEXT_PADDING = 5;
+export const ARROW_LABEL_WIDTH_FRACTION = 0.7;
+export const ARROW_LABEL_FONT_SIZE_TO_MIN_WIDTH_RATIO = 11;
 
 export const VERTICAL_ALIGN = {
   TOP: "top",
@@ -257,3 +298,38 @@ export const ROUNDNESS = {
 /** key containt id of precedeing elemnt id we use in reconciliation during
  * collaboration */
 export const PRECEDING_ELEMENT_KEY = "__precedingElement__";
+
+export const ROUGHNESS = {
+  architect: 0,
+  artist: 1,
+  cartoonist: 2,
+} as const;
+
+export const DEFAULT_ELEMENT_PROPS: {
+  strokeColor: ExcalidrawElement["strokeColor"];
+  backgroundColor: ExcalidrawElement["backgroundColor"];
+  fillStyle: ExcalidrawElement["fillStyle"];
+  strokeWidth: ExcalidrawElement["strokeWidth"];
+  strokeStyle: ExcalidrawElement["strokeStyle"];
+  roughness: ExcalidrawElement["roughness"];
+  opacity: ExcalidrawElement["opacity"];
+  locked: ExcalidrawElement["locked"];
+} = {
+  strokeColor: COLOR_PALETTE.black,
+  backgroundColor: COLOR_PALETTE.transparent,
+  fillStyle: "solid",
+  strokeWidth: 2,
+  strokeStyle: "solid",
+  roughness: ROUGHNESS.artist,
+  opacity: 100,
+  locked: false,
+};
+
+export const LIBRARY_SIDEBAR_TAB = "library";
+
+export const DEFAULT_SIDEBAR = {
+  name: "default",
+  defaultTab: LIBRARY_SIDEBAR_TAB,
+} as const;
+
+export const LIBRARY_DISABLED_TYPES = new Set(["embeddable", "image"] as const);
